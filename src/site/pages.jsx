@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { ContactForm, QuoteForm } from "./forms.jsx";
 import { PROCESS_STEPS, SERVICE_OPTIONS } from "./data.js";
 import { Footer, Header, PublicLayout } from "./layout.jsx";
-import { checkCredentials, DEFAULTS, downloadCSV, logActivity, logout, makeRef, read, resetKeys, toCSV, uid, useData, write } from "./store.js";
+import { checkCredentials, login, DEFAULTS, downloadCSV, logActivity, logout, makeRef, read, resetKeys, toCSV, uid, useData, write } from "./store.js";
 import { ConfirmDialog, Field, formatDate, Icon, Modal, ReusableImage, SectionHeading, serviceIcon, useToast } from "./ui.jsx";
 import { isEmail, isImageUrl, isPhone } from "./validation.js";
 
@@ -93,7 +93,7 @@ export function ContactPage() {
 }
 
 export function QuotePage() {
-  const search = useParams({ strict: false });
+  const search = useSearch({ strict: false });
   return <PublicLayout><PageHero eyebrow="Request a quote" title="Tell us about your next shipment" text="Share the cargo, route and timeline so your enquiry can be reviewed." /><section className="section-pad section-muted"><div className="container-x quote-layout"><div><span className="eyebrow">Shipment enquiry</span><h2>Start with the essentials</h2><p>Include as much detail as you can about your cargo and route. The form is for demonstration only and does not create a shipment booking.</p><ContactStrip /><div className="quote-assurance"><Icon name="shield" /><span>Saved in this browser only<br /><small>No booking, email or communication is made.</small></span></div></div><div className="quote-form-panel"><QuoteForm initialService={search.service ?? ""} /></div></div></section></PublicLayout>;
 }
 
@@ -104,7 +104,7 @@ const ADMIN_NAV = [
 function AdminGate() {
   const navigate = useNavigate();
   const [email, setEmail] = useState(""), [password, setPassword] = useState(""), [error, setError] = useState("");
-  const submit = (event) => { event.preventDefault(); if (!checkCredentials(email, password)) { setError("Those details don’t match the demo admin account."); return; } navigate({ to: "/admin" }); };
+  const submit = (event) => { event.preventDefault(); if (!checkCredentials(email, password) || !login(email, password)) { setError("Those details don’t match the demo admin account."); return; } navigate({ to: "/admin" }); };
   return <main className="login-page"><div className="login-panel"><Link to="/" className="login-brand"><Icon name="ship" /><span>Shree Siddhivinayak<small>ADMINISTRATION</small></span></Link><span className="eyebrow">Admin access</span><h1>Sign in to manage your website</h1><p className="text-muted-foreground">Frontend demonstration access only.</p><form onSubmit={submit} className="login-form"><Field label="Email address" id="admin-email"><input className="field" id="admin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></Field><Field label="Password" id="admin-password"><input className="field" id="admin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></Field>{error && <p role="alert" className="field-error">{error}</p>}<button className="btn btn-primary w-full" type="submit">Sign in <Icon name="arrow" /></button></form><Link to="/" className="text-link mt-6">Return to website <Icon name="arrow" /></Link></div></main>;
 }
 
@@ -190,9 +190,10 @@ export function AdminLoginPage() { const session = useData("session"); const nav
 
 export function AdminDashboardPage() {
   const session = useData("session"), navigate = useNavigate();
-  const routeSearch = useMemo(() => new URLSearchParams(typeof window === "undefined" ? "" : window.location.search), []);
-  const [section, setSection] = useState(routeSearch.get("section") ?? "overview");
-  useEffect(() => { if (!session) { navigate({ to: "/admin-login" }); return; } const sync = () => setSection(new URLSearchParams(window.location.search).get("section") ?? "overview"); window.addEventListener("popstate", sync); return () => window.removeEventListener("popstate", sync); }, [session, navigate]);
+  const search = useSearch({ strict: false });
+  const section = search.section ?? "overview";
+  const setSection = (s) => navigate({ to: "/admin", search: { section: s } });
+  useEffect(() => { if (!session) navigate({ to: "/admin-login" }); }, [session, navigate]);
   const titleMap = { overview: "Dashboard", settings: "Website Settings", home: "Homepage Content", services: "Services", industries: "Industries", gallery: "Gallery", quotes: "Quote Requests", contacts: "Contact Enquiries", footer: "Navigation & Footer", data: "Data Management" };
-  return <AdminLayout><main className="admin-content">{section === "overview" && <AdminOverview setSection={(s) => { setSection(s); history.pushState(null, "", `/admin?section=${s}`); }} />}{section === "settings" && <SettingsManager />}{section === "home" && <HomepageManager />}{["services", "industries", "gallery"].includes(section) && <ContentManager kind={section} />}{["quotes", "contacts"].includes(section) && <EnquiryManager kind={section} />}{section === "footer" && <FooterManager />}{section === "data" && <DataManager />}{!titleMap[section] && <AdminOverview setSection={setSection} />}</main></AdminLayout>;
+  return <AdminLayout><main className="admin-content">{section === "overview" && <AdminOverview setSection={setSection} />}{section === "settings" && <SettingsManager />}{section === "home" && <HomepageManager />}{["services", "industries", "gallery"].includes(section) && <ContentManager kind={section} />}{["quotes", "contacts"].includes(section) && <EnquiryManager kind={section} />}{section === "footer" && <FooterManager />}{section === "data" && <DataManager />}{!titleMap[section] && <AdminOverview setSection={setSection} />}</main></AdminLayout>;
 }
