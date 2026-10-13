@@ -1,0 +1,11 @@
+{
+  "source": "github",
+  "repository": "https://github.com/vicky0700018/siddhivinayak-logistics-hub",
+  "capabilities": [
+    { "capability": "application code and bundled images", "source": "GitHub repository", "outcome": "migrate", "status": "in progress", "next_action": "Bring repository modules and assets into the existing project and connect public and admin pages." },
+    { "capability": "database schema and records", "source": "none detected", "outcome": "not applicable", "status": "verified absent", "next_action": "None; the source uses localStorage mock data." },
+    { "capability": "authentication and authorization", "source": "frontend demo credentials and browser localStorage", "outcome": "preserve as frontend demo", "status": "in progress", "next_action": "Connect the existing mock sign-in to protected admin screens." },
+    { "capability": "external providers, endpoints, webhooks, schedules, and secrets", "source": "none detected", "outcome": "not applicable", "status": "verified absent", "next_action": "None detected." },
+    { "capability": "production cutover and deployment verification", "source": "GitHub repository", "outcome": "pending", "status": "not verified", "next_action": "No deployed production URL was supplied; verify the local preview and production build only." }
+  ]
+}
